@@ -1,0 +1,129 @@
+---
+title: "Exploring Philadelphia property tax data"
+author: "Nathaniel Olin"
+date: "`r Sys.time()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    # code_folding: "hide"
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setup
+
+```{r setup}
+setwd('~/projects/phl-property')
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+library(ggmap)
+```
+
+# Get data
+
+```{r read data}
+dat <- data.table::fread(file.path('data', 'real_estate_tax_balances.csv'), 
+                         data.table = FALSE)
+```
+
+## Clean variables
+
+```{r clean data}
+# Code latitude and longitude
+dat$lat <- as.numeric(gsub('\\(|,.*', '', dat$coordinates))
+dat$lng <- as.numeric(gsub('.* |\\)', '', dat$coordinates))
+
+dat$council_districts_2016 <- as.factor(dat$council_districts_2016)
+```
+
+# Maps
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(fig.width = 7, fig.height = 7)
+```
+
+```{r map, message = FALSE}
+dat %>%
+  filter(tax_period == 2015 & total > 0 & 
+           penalty <= 500 & penalty > 0) %>%
+  arrange(penalty) %>%
+  qmplot(lng, lat, data = ., maptype = "toner-lite", 
+         color = penalty, 
+         # size = total,
+         alpha = I(0.3),
+         legend = 'bottomright') +
+  geom_point(alpha = 0.3) +
+  viridis::scale_color_viridis('Tax Penalty', label = scales::dollar, direction = -1) +
+  scale_size_continuous('Total Tax Amount', label = scales::dollar) +
+  labs(title = 'Property Tax Penalties in 2015')
+```
+
+# Figures {.tabset}
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(fig.height = 5)
+```
+
+## Trends over time
+
+```{r time fig, echo = FALSE}
+plot_data <- dat %>% 
+  filter(tax_period >= 2000 & tax_period <= 2015 & 
+           !is.na(council_districts_2016)) %>%
+  group_by(tax_period, council_districts_2016) %>%
+  summarize(taxes = sum(total, na.rm = T) / length(unique(parcel_number)))
+
+# Hack to make line labels avoid lines
+plot_data$line_label <- paste('District', plot_data$council_districts_2016)
+plot_data$line_label[plot_data$tax_period != 2015] <- ""
+
+ggplot(plot_data,
+       aes(x = tax_period, y = taxes, 
+           color = council_districts_2016)) +
+  geom_line(size = 2) +
+  scale_x_continuous(breaks = seq(2000, 2015, by = 5)) +
+  scale_y_continuous(labels = scales::dollar) +
+  viridis::scale_color_viridis(discrete = T, end = 0.9) +
+  guides(color = FALSE) +
+  ggrepel::geom_text_repel(
+    aes(label = line_label),
+    nudge_x = 1.5,
+    segment.color = NA
+  ) +
+  # theme_bw() + 
+  coord_cartesian(xlim = c(min(plot_data$tax_period), max(plot_data$tax_period) + 2.1)) +
+  labs(x = 'Year', y = 'Taxes per Residence (dollars)', 
+       title = 'Taxes per Residence, over time, by Council District')
+```
+
+## 2015 property taxes
+
+```{r 2015 fig, echo = FALSE}
+dat %>%
+  filter(tax_period == 2015 & !is.na(council_districts_2016)) %>%
+  # mutate(council_districts_2016 = factor(
+  #   council_districts_2016, 
+  #   levels = rev(levels(council_districts_2016)))) %>%
+  group_by(council_districts_2016) %>%
+  summarize(taxes = sum(total, na.rm = T) / length(unique(parcel_number))) %>%
+  ggplot(aes(x = council_districts_2016, y = taxes, 
+             label = scales::dollar(round(taxes)), fill = -1 * taxes)) +
+  geom_bar(stat = 'identity') +
+  geom_label(fill = 'white') +#, nudge_y = -10) +
+  scale_y_continuous(labels = scales::dollar) + #, expand = c(0, 0, 0.05, 0)) +
+  viridis::scale_fill_viridis() + 
+  guides(fill = FALSE) +
+  labs(x = 'Council District', y = '2015 Penalties per Residence', 
+       title = '2015 Taxes per Residence, by District') +
+  theme(axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+  # coord_flip() +
+  # theme_bw()
+```
+
+
+
+
