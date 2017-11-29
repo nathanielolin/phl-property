@@ -90,7 +90,7 @@ ggplot(plot_data,
   scale_x_continuous(breaks = seq(2000, 2015, by = 5)) +
   scale_y_continuous(labels = scales::dollar) +
   scale_color_manual(values = phl_palette(
-    'bgy', n = length(unique(dat$council_districts_2016)),
+    'rainbow', n = length(unique(dat$council_districts_2016)),
     type = 'continuous')) +
   guides(color = FALSE) +
   ggrepel::geom_text_repel(
