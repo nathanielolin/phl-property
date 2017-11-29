@@ -15,10 +15,12 @@ editor_options:
 
 ```{r setup}
 setwd('~/projects/phl-property')
-rm(list = ls())
+
 library(ggplot2)
 library(dplyr)
 library(ggmap)
+
+source('phila_pal.R')
 ```
 
 # Get data
@@ -55,7 +57,9 @@ dat %>%
          alpha = I(0.3),
          legend = 'bottomright') +
   geom_point(alpha = 0.3) +
-  viridis::scale_color_viridis('Tax Penalty', label = scales::dollar, direction = -1) +
+  scale_color_gradientn('Tax Penalty',
+                        colors = rev(phl_palette('blues', n = 30, type = 'continuous')),
+                        label = scales::dollar) +
   scale_size_continuous('Total Tax Amount', label = scales::dollar) +
   labs(title = 'Property Tax Penalties in 2015')
 ```
@@ -85,14 +89,16 @@ ggplot(plot_data,
   geom_line(size = 2) +
   scale_x_continuous(breaks = seq(2000, 2015, by = 5)) +
   scale_y_continuous(labels = scales::dollar) +
-  viridis::scale_color_viridis(discrete = T, end = 0.9) +
+  scale_color_manual(values = phl_palette(
+    'bgy', n = length(unique(dat$council_districts_2016)),
+    type = 'continuous')) +
   guides(color = FALSE) +
   ggrepel::geom_text_repel(
     aes(label = line_label),
     nudge_x = 1.5,
     segment.color = NA
   ) +
-  # theme_bw() + 
+  theme_bw() +
   coord_cartesian(xlim = c(min(plot_data$tax_period), max(plot_data$tax_period) + 2.1)) +
   labs(x = 'Year', y = 'Taxes per Residence (dollars)', 
        title = 'Taxes per Residence, over time, by Council District')
@@ -113,7 +119,7 @@ dat %>%
   geom_bar(stat = 'identity') +
   geom_label(fill = 'white') +#, nudge_y = -10) +
   scale_y_continuous(labels = scales::dollar) + #, expand = c(0, 0, 0.05, 0)) +
-  viridis::scale_fill_viridis() + 
+  scale_fill_gradientn(colors = phl_palette('bgy', n = 100, type = 'continuous')) + 
   guides(fill = FALSE) +
   labs(x = 'Council District', y = '2015 Penalties per Residence', 
        title = '2015 Taxes per Residence, by District') +
