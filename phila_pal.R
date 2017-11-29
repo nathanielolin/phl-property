@@ -24,9 +24,10 @@ phl_palettes <- list(
   normal = c('#2176d2', '#f3c613', '#58c04d', '#f99300', '#a1a1a1'), 
   light = c('#96c9ff', '#ffefa2', '#fed0d0', '#b9f2b1', '#cfcfcf'),
   dark = c('#0f4d90', '#cc3000', '#3a833c', '#9400c6', '#444444'),
-  blues = c('#0f4d90', '#2176d2', '#96c9ff'),
+  blues = c('#0f4d90', '#2176d2', '#96c9ff', '#DAEDFE'),
   bgy = c('#2176d2', '#58c04d', '#f3c613'),
-  bgy_light = c('#96c9ff', '#ffefa2','#f3c613')
+  bgy_light = c('#96c9ff', '#ffefa2','#f3c613'),
+  rainbow = c('#cc3000', '#f99300', '#f3c613', '#58c04d', '#2176d2', '#0f4d90', '#9400c6')
 )
 
 
